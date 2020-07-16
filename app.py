@@ -14,10 +14,7 @@ import gcsfs
 import urllib.request
 from PIL import Image
 
-from google.cloud import storage
-
-path = "gs://atlas-bioseguridad/resoluciones_db_geo_29062020.csv"
-
+path = "resoluciones_db_geo_29062020.csv"
 
 # Leyendo datos de resoluciones
 
@@ -25,8 +22,8 @@ data_gmo = pd.read_csv(path, encoding ="latin-1")
 
 # Cargando imágenes
 
-url_legend = 'https://storage.googleapis.com/atlas-bioseguridad/legend_atlas.png'
-url_logo = 'https://storage.googleapis.com/atlas-bioseguridad/logo_cibiogem.png'
+url_legend = 'legend_atlas.png'
+url_logo = 'logo_cibiogem.png'
 legend = Image.open(urllib.request.urlopen(url_legend))
 logo = Image.open(urllib.request.urlopen(url_logo))
 
