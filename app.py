@@ -22,10 +22,8 @@ data_gmo = pd.read_csv(path, encoding ="latin-1")
 
 # Cargando imágenes
 
-url_legend = 'legend_atlas.png'
-url_logo = 'logo_cibiogem.png'
-legend = Image.open(urllib.request.urlopen(url_legend))
-logo = Image.open(urllib.request.urlopen(url_logo))
+legend = Image.open('legend_atlas.png')
+logo = Image.open('logo_cibiogem.png')
 
 # Transform color maps
 COLORS_R = {"Algodón": 190, "Maíz": 236, "Soya":153, "Alfalfa":101, "Trigo":135, "Limón mexicano":102, "Frijol":59, "Naranja dulce Valencia":255}
