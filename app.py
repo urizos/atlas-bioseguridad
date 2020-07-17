@@ -26,6 +26,7 @@ legend = Image.open('legend_atlas.png')
 logo = Image.open('logo_cibiogem.png')
 
 # Transform color maps
+
 COLORS_R = {"Algodón": 190, "Maíz": 236, "Soya":153, "Alfalfa":101, "Trigo":135, "Limón mexicano":102, "Frijol":59, "Naranja dulce Valencia":255}
 
 COLORS_G = {"Algodón": 169, "Maíz": 228, "Soya":185, "Alfalfa":74, "Trigo":138, "Limón mexicano":146, "Frijol":185, "Naranja dulce Valencia":181}
@@ -38,44 +39,76 @@ data_gmo["color_b"] = data_gmo["specie"].map(COLORS_B)
 
 st.image(logo,use_column_width=True)
 st.markdown('''# *Atlas Interactivo de Bioseguridad de los Organismos Genéticamente Modificados*
-La Secretaría Ejecutiva de la CIBIOGEM, desarrolla y actualiza el Sistema Nacional de Información sobre Bioseguridad (SNIB)y el Registro Nacional de Bioseguridad de los OGMS (RNB), ambas plataformas están dedicadas a reunir y sintetizar documentos y bases de datos relevantes en materia de bioseguridad y uso y liberación al ambiente de Organismos Genéticamente Modificados. El presente Atlas interactivo de Bioseguridad muestra la información geográfica y estadística de todos los permisos de liberación al ambiente con resolución favorable entre los años 2005 y 2018.''')
+La Secretaría Ejecutiva de la CIBIOGEM, desarrolla y actualiza el Sistema Nacional de Información sobre Bioseguridad (SNIB) 
+y el Registro Nacional de Bioseguridad de los OGMS (RNB), ambas plataformas están dedicadas a reunir y sintetizar documentos y 
+bases de datos relevantes en materia de bioseguridad y uso y liberación al ambiente de Organismos Genéticamente Modificados. 
+El presente Atlas interactivo de Bioseguridad muestra la información geográfica y estadística de todos los permisos de liberación al
+ambiente con resolución favorable entre los años 2005 y 2018.*Toda la información publicada en esta página forma parte del Registro 
+Nacional de Bioseguridad de los Organismos Genéticamente Modificados.* ''')
+
+url = 'https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020'
+
+if st.button('Ir al Registro Nacional de Bioseguridad de OGM'):
+    webbrowser.open_new_tab(url)
 
 # Selectores de información
 
 st.sidebar.subheader('Parámetros de búsqueda')
 
-st.sidebar.markdown('''Empleando los siguientes controles usted podrá filtrar y seleccionar todas las solicitudes de liberación al ambiente de OGM que figuran en el Sistema Nacional de Información en Bioseguridad desde 2005 a 2018. Cada solicitud puede ser selecionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
+st.sidebar.markdown('''Empleando los siguientes controles usted podrá filtrar y seleccionar todas las solicitudes de liberación al ambiente de OGM con resolución positiva que figuran en el Sistema Nacional de Información en Bioseguridad desde 2005 a 2018. Cada solicitud puede ser selecionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
 
-year_to_filter = st.sidebar.slider('Año de solicitud',2005,2018,2005)
+year_to_filter = st.sidebar.multiselect('Año de liberación',list(data_gmo['year'].unique()), default=[2005])
 
-type_filter = st.sidebar.selectbox('Tipo de liberación',('Experimental','Programa Piloto', 'Comercial'))
+type_filter = st.sidebar.multiselect('Tipo de liberación',list(data_gmo['type'].unique()), default=['Experimental'])
 
 specie_filter = st.sidebar.multiselect('Organismo de la solicitud', list(data_gmo['specie'].unique()),default=['Algodón','Maíz','Soya'])
 
-filtered_data = data_gmo[data_gmo['year'] == year_to_filter]
-filtered_data = filtered_data[filtered_data['type'] == type_filter]
+filtered_data = data_gmo[data_gmo.year.isin(year_to_filter)]
+filtered_data = filtered_data[filtered_data.type.isin(type_filter)]
 filtered_data= filtered_data[filtered_data.specie.isin(specie_filter)]
 
-#Base de datos para el mapa
+#Base de datos global
 counter_data = filtered_data.groupby(['cvgeo']).count()[['id']].reset_index()
 
-counter_data = pd.merge(counter_data, filtered_data[['cvgeo','mun','ent','specie','ORGANISMO','FECHA_RESOLUCION','type','lat','lon','color_r','color_g','color_b']], left_on='cvgeo', right_on='cvgeo', how='left')
+counter_data = pd.merge(counter_data, filtered_data[['cvgeo','mun','ent','specie','ORGANISMO','year','type','lat','lon','color_r','color_g','color_b']], left_on='cvgeo', right_on='cvgeo', how='left')
 
 counter_data = counter_data.drop_duplicates(subset=['cvgeo','specie']).reset_index(drop=True)
+
+# Creación de Mapa y gráficos
 
 if not counter_data.size:
     st.subheader('Esto es embarazoso, intenta otros parámetros')
 else:
-    table_data = counter_data[['id','mun','ent','specie','ORGANISMO','type','FECHA_RESOLUCION']]
+    table_data = counter_data[['id','mun','ent','specie','ORGANISMO','type','year']]
     table_data.columns = ['Número de solicitudes','Municipio','Entidad','Especie','Nombre científico','Tipo de solicitud','Fecha de resolución']
 
-    st.write('## Se muestran todas las solicitudes de tipo', type_filter, 'del año', year_to_filter, 'agrupadas por municipio:')
+    # Descripción de los datos mostrados
+    st.write('**Se muestran todas las solicitudes de liberación de los siguientes años:**')
+    st.info(', '.join(map(str,year_to_filter)))
+    st.write('**De los siguientes tipos de liberación:**')
+    st.info(', '.join(type_filter))
+    st.write('**Y de los siguientes organismos:**')
+    st.info(', '.join(specie_filter))
 
-    st.markdown('**Tabla de Resoluciones**')
+    st.markdown('''
+    ---
+    ## **Resumen de los permisos de liberación selecionados agrupados por municipio**
+    **Tabla de Resoluciones**
+    
+    La siguiente tabla muestra el numero de permisos agrupados por municipio. Adicionalente, se detalla la especie, el tipo de solicitud
+     y el año de liberación. Puedes emplear las barras laterales para desplazarte en la tabla y el icono de las fechas en la esquina superior derecha de la tabla
+     para mostrar la información en pantalla completa.''')
     st.write(table_data)
 
-    st.markdown('**Ubicación geográfica de las solicitudes de liberación al ambiente**')
+    st.markdown('''
+    **Ubicación geográfica de las solicitudes de liberación al ambiente**
+    
+    El mapa muestra la ubicación geográfica de las solicitudes de liberación. EL ancho del circulo corresponde al número de solicitudes por cada municipio. Puedes
+    posicionar el cursor sobre cada punto para conocer información adicional.''')
+
+    #Mapa
     st.image(legend,use_column_width=True)
+    st.info('*La leyenda muestra la cromática de todos los cultivos disponibles en la base de datos.*')
     st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/light-v9',
     initial_view_state=pdk.ViewState(
@@ -119,11 +152,18 @@ else:
     except KeyError: 
         st.subheader('Intenta con otros Parámetros')
     else:
-        st.markdown('**Solicitudes aprovadas por entidad federativa**')
+        st.markdown('''
+        **Solicitudes aprobadas por entidad federativa**
+
+        El gráfico muestra el agregado de solicitudes aprobadas en cada entidad federativa. Cada bloque dentro de la barra representa a un municipio distinto
+        dentro de la Entidad Federativa.
+        ''')
         st.plotly_chart(fig_states)
-        st.markdown('_Cada bloque dentro de la barra representan a un municipio distinto dentro de la Entidad Federativa_')
 
 #Gráfico Superficies
+    st.markdown('''
+    ---
+    ## **Información adicional sobre los permisos de liberación**''')
     data_area = filtered_data.groupby(['specie']).mean()[['area']].dropna().reset_index()
     mini_counter= filtered_data.groupby(['specie']).count()[['id']].reset_index()
     data_area["color"] = data_area["specie"].map(colorsIdx)
@@ -131,28 +171,23 @@ else:
 
     fig_area = px.scatter(data_area, x="area", y="specie",color="specie",color_discrete_map=colorsIdx, size="id", labels={"area":"Superficie aprobada (ha)", "id":"Número de Solicitudes","specie":"Organismo"})
     
-    st.markdown('**Superficie promedio aprovada por solicitud de liberación al ambiente de OGM**')
+    st.markdown('''
+    **Superficie promedio aprobada por solicitud de liberación al ambiente de OGM**
+    
+    El gráfico muestra la media de superficie aprobada por municipio considerando todas las solicitudes del mismo organismo.
+    El tamaño del circulo representa el número de solicitudes.''')
     st.plotly_chart(fig_area)
-    st.markdown('_El tamaño del circulo representa el número de solicitudes_')
 # Gráfico características
     data_caract = filtered_data[['PROMOVENTE','EVENTO','specie','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba']]
     data_caract["color"] = data_caract["specie"].map(colorsIdx)
     fig_caract = px.parallel_categories(data_caract, dimensions=['EVENTO','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba'], color="color",width=900, labels={"EVENTO": "Evento transgénico","specie": "Especie", "Resistencia_Insectos": "Resistencia a insectos","Tolerancia_Glufosinato": "Tolerancia a glufosinato","Tolerancia_Glifosato":"Tolerancia al glifosato","Tolerancia_Dicamba":"Tolerancia a Dicamba"})
     
-    st.markdown('**Carácterísticas fenotípicas de las distintas solicitudes de liberación al ambiente**')
+    st.markdown('''
+    **Carácterísticas fenotípicas de las distintas solicitudes de liberación al ambiente**
+    
+    El gráfico muestra el número de solicitudes agrupadas según el evento trnasgénico y sus caracteristicas. Cada variable en el conjunto de datos 
+    está representada por una columna de rectángulos. 
+    Las alturas relativas de los rectángulos reflejan la frecuencia relativa de ocurrencia del valor correspondiente. Al posicionar el cursor en cada segmento de la
+    barra se muestra el número de solicitudes que poseen dicha característica.''')
     st.image(legend,use_column_width=True)
     st.plotly_chart(fig_caract)
-
-# About
-
-st.sidebar.markdown('''
-> _**Acerca de esta información**_
-
-> *Toda la información publicada en esta página forma parte del Registro Nacional de Bioseguridad de los Organismos Genéticamente Modificados.*
-''')
-
-url = 'https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020'
-
-if st.sidebar.button('Ir al Registro Nacional de Bioseguridad de OGM'):
-    webbrowser.open_new_tab(url)
-
