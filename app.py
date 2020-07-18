@@ -204,7 +204,7 @@ else:
     data_caract = data_caract.drop_duplicates(subset=['SOLICITUD']).reset_index(drop=True)
     
 
-    fig_caract = px.parallel_categories(data_caract,dimensions=['EVENTO','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba'], color="color",width=1000,labels={"EVENTO": "Evento transgénico","specie": "Especie", "Resistencia_Insectos": "Resistencia a insectos","Tolerancia_Glufosinato": "Tolerancia a glufosinato","Tolerancia_Glifosato":"Tolerancia al glifosato","Tolerancia_Dicamba":"Tolerancia a Dicamba"})
+    fig_caract = px.parallel_categories(data_caract,dimensions=['EVENTO','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba'], color="color",width=900,labels={"EVENTO": "Evento transgénico","specie": "Especie", "Resistencia_Insectos": "Resistencia a insectos","Tolerancia_Glufosinato": "Tolerancia a glufosinato","Tolerancia_Glifosato":"Tolerancia al glifosato","Tolerancia_Dicamba":"Tolerancia a Dicamba"})
     fig_caract.update_layout(margin=dict(l=40, r=25, b=40, t=40))
 
     st.markdown('''
