@@ -80,11 +80,10 @@ filtered_data= filtered_data[filtered_data.specie.isin(specie_filter)]
 
 solic_data_raw = filtered_data.groupby(['SOLICITUD']).count()[['id']].reset_index()
 
-solic_data_ents = pd.merge(solic_data_raw, filtered_data[['SOLICITUD','ent','specie','ORGANISMO','year','type','area','color_r','color_g','color_b']], left_on='SOLICITUD', right_on='SOLICITUD', how='left')
+solic_data_ents = pd.merge(solic_data_raw, filtered_data[['SOLICITUD','ent','specie','ORGANISMO','year','type','area','PROMOVENTE','EVENTO','color_r','color_g','color_b']], left_on='SOLICITUD', right_on='SOLICITUD', how='left')
 
 solic_data = solic_data_ents.drop_duplicates(subset=['SOLICITUD']).reset_index(drop=True)
 
-st.write(solic_data)
 #Base de datos geográfica
 filtered_data['COUNTER'] = 1
 
@@ -99,6 +98,8 @@ counter_data = counter_data.drop_duplicates(subset=['cvgeo','type','specie']).re
 if not counter_data.size:
     st.subheader('Esto es embarazoso, intenta otros parámetros')
 else:
+    table_solic = solic_data[['SOLICITUD','specie','ORGANISMO','year','type','area','PROMOVENTE','EVENTO']]
+    table_solic.columns = ['Solicitud','Especie','Nombre cinetífico','Año','Tipo de solicitud','Area aprobada (ha)','Promovente','Evento']
     table_data = counter_data[['COUNTER','mun','ent','specie','ORGANISMO','type','year']]
     table_data.columns = ['Número de solicitudes','Municipio','Entidad','Especie','Nombre científico','Tipo de solicitud','Fecha de resolución']
 
@@ -109,16 +110,11 @@ else:
     st.info(', '.join(type_filter))
     st.write('**Y de los siguientes organismos:**')
     st.info(', '.join(specie_filter))
+    st.write(table_solic)
 
     st.markdown('''
     ---
-    ## **Resumen de los permisos de liberación selecionados agrupados por municipio**
-    **Tabla de Resoluciones**
-    
-    La siguiente tabla muestra el numero de permisos agrupados por municipio. Adicionalente, se detalla la especie, el tipo de solicitud
-     y el año de liberación. Puedes emplear las barras laterales para desplazarte en la tabla y el icono de las fechas en la esquina superior derecha de la tabla
-     para mostrar la información en pantalla completa.''')
-    st.write(table_data)
+    ## **Resumen de los permisos de liberación selecionados agrupados por municipio**''')
 
     st.markdown('''
     **Ubicación geográfica de las solicitudes de liberación al ambiente**
@@ -165,6 +161,14 @@ else:
         "style": {"color": "white"},
      },
      ))
+#Tabla por municipio
+    st.markdown('''
+    **Tabla de Resoluciones**
+    
+    La siguiente tabla muestra el numero de permisos agrupados por municipio. Adicionalente, se detalla la especie, el tipo de solicitud
+     y el año de liberación. Puedes emplear las barras laterales para desplazarte en la tabla y el icono de las fechas en la esquina superior derecha de la tabla
+     para mostrar la información en pantalla completa.''')
+    st.write(table_data)
 
 # Gráfico por estados
     try: 
@@ -205,14 +209,13 @@ else:
     
 
     fig_caract = px.parallel_categories(data_caract,dimensions=['EVENTO','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba'], color="color",width=900,labels={"EVENTO": "Evento transgénico","specie": "Especie", "Resistencia_Insectos": "Resistencia a insectos","Tolerancia_Glufosinato": "Tolerancia a glufosinato","Tolerancia_Glifosato":"Tolerancia al glifosato","Tolerancia_Dicamba":"Tolerancia a Dicamba"})
-    fig_caract.update_layout(margin=dict(l=40, r=25, b=40, t=40))
+    fig_caract.update_layout(margin=dict(l=150, r=15, b=40, t=40))
 
     st.markdown('''
     **Carácterísticas fenotípicas de las distintas solicitudes de liberación al ambiente**
     
-    El gráfico muestra el número de solicitudes agrupadas según el evento trnasgénico y sus caracteristicas. Cada variable en el conjunto de datos 
-    está representada por una columna de rectángulos. 
-    Las alturas relativas de los rectángulos reflejan la frecuencia relativa de ocurrencia del valor correspondiente. Al posicionar el cursor en cada segmento de la
-    barra se muestra el número de solicitudes que poseen dicha característica.''')
+    El gráfico muestra el número de solicitudes agrupadas según el evento transgénico y sus características de resistencia a insectos o tolerancia a herbicidas.
+    Cada atributo está representado por una columna de rectángulos. El tamaño de cada rectángulo reflejan el número de solicitudes que presentó o no una carácterística
+     determinada. Al posicionar el cursor en cada segmento de la barra se muestra el número de solicitudes que poseen dicha característica bajo la leyenda: *Cuenta* (```Count```).''')
     st.image(legend,use_column_width=True)
     st.plotly_chart(fig_caract)
