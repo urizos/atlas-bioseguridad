@@ -1,0 +1,7 @@
+.stButton>button {
+    border-radius:6px;
+    background-color:#ff4b4b;
+    color: white;
+    font-weight: bold;
+    margin: 0 auto;
+    float: left;}

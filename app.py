@@ -13,7 +13,14 @@ from io import BytesIO
 import gcsfs
 import urllib.request
 from PIL import Image
+#styling
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+local_css("style.css")
+
+# Archivos principales
 path = "resoluciones_db_geo_29062020.csv"
 
 # Leyendo datos de resoluciones
@@ -48,14 +55,16 @@ Nacional de Bioseguridad de los Organismos Genéticamente Modificados.* ''')
 
 url = 'https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020'
 
-if st.button('Ir al Registro Nacional de Bioseguridad de OGM'):
-    webbrowser.open_new_tab(url)
+if st.button('Ir al Registro Nacional de Bioseguridad de OGM'): webbrowser.open_new_tab(url)
 
 # Selectores de información
 
 st.sidebar.subheader('Parámetros de búsqueda')
 
-st.sidebar.markdown('''Empleando los siguientes controles usted podrá filtrar y seleccionar todas las solicitudes de liberación al ambiente de OGM con resolución positiva que figuran en el Sistema Nacional de Información en Bioseguridad desde 2005 a 2018. Cada solicitud puede ser selecionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
+st.sidebar.markdown('''
+Empleando los siguientes controles usted podrá filtrar y seleccionar todas las solicitudes de liberación al
+ ambiente de OGM con resolución favorable que figuran en el Sistema Nacional de Información en Bioseguridad desde 2005 a 2018. 
+ Cada solicitud puede ser selecionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
 
 year_to_filter = st.sidebar.multiselect('Año de liberación',list(data_gmo['year'].unique()), default=[2005])
 
@@ -67,19 +76,30 @@ filtered_data = data_gmo[data_gmo.year.isin(year_to_filter)]
 filtered_data = filtered_data[filtered_data.type.isin(type_filter)]
 filtered_data= filtered_data[filtered_data.specie.isin(specie_filter)]
 
-#Base de datos global
-counter_data = filtered_data.groupby(['cvgeo']).count()[['id']].reset_index()
+#Base de datos por solicitud
+
+solic_data_raw = filtered_data.groupby(['SOLICITUD']).count()[['id']].reset_index()
+
+solic_data_ents = pd.merge(solic_data_raw, filtered_data[['SOLICITUD','ent','specie','ORGANISMO','year','type','area','color_r','color_g','color_b']], left_on='SOLICITUD', right_on='SOLICITUD', how='left')
+
+solic_data = solic_data_ents.drop_duplicates(subset=['SOLICITUD']).reset_index(drop=True)
+
+st.write(solic_data)
+#Base de datos geográfica
+filtered_data['COUNTER'] = 1
+
+counter_data = filtered_data.groupby(['cvgeo', 'type'])['COUNTER'].sum()
 
 counter_data = pd.merge(counter_data, filtered_data[['cvgeo','mun','ent','specie','ORGANISMO','year','type','lat','lon','color_r','color_g','color_b']], left_on='cvgeo', right_on='cvgeo', how='left')
 
-counter_data = counter_data.drop_duplicates(subset=['cvgeo','specie']).reset_index(drop=True)
+counter_data = counter_data.drop_duplicates(subset=['cvgeo','type','specie']).reset_index(drop=True)
 
 # Creación de Mapa y gráficos
 
 if not counter_data.size:
     st.subheader('Esto es embarazoso, intenta otros parámetros')
 else:
-    table_data = counter_data[['id','mun','ent','specie','ORGANISMO','type','year']]
+    table_data = counter_data[['COUNTER','mun','ent','specie','ORGANISMO','type','year']]
     table_data.columns = ['Número de solicitudes','Municipio','Entidad','Especie','Nombre científico','Tipo de solicitud','Fecha de resolución']
 
     # Descripción de los datos mostrados
@@ -103,8 +123,9 @@ else:
     st.markdown('''
     **Ubicación geográfica de las solicitudes de liberación al ambiente**
     
-    El mapa muestra la ubicación geográfica de las solicitudes de liberación. EL ancho del circulo corresponde al número de solicitudes por cada municipio. Puedes
-    posicionar el cursor sobre cada punto para conocer información adicional.''')
+    El mapa muestra la ubicación geográfica de las solicitudes de liberación. Puedes
+    posicionar el cursor sobre cada punto para conocer información adicional.
+    El ancho del circulo corresponde al número de solicitudes por cada municipio. ''')
 
     #Mapa
     st.image(legend,use_column_width=True)
@@ -130,7 +151,7 @@ else:
             radius_max_pixels=100,
             line_width_min_pixels=1,
             get_position=['lon', 'lat'],
-            get_radius="id*2000",
+            get_radius="COUNTER*700",
             get_fill_color=['color_r', 'color_g', 'color_b'],
             get_line_color=[0, 0, 0],
         ),
@@ -138,7 +159,7 @@ else:
      tooltip={
         "html": "<b>Organismo:</b> {specie}"
         "<br/> <b>Tipo de liberación:</b> {type}"
-        "<br/> <b>Número de solicitudes:</b> {id} "
+        "<br/> <b>Número de solicitudes:</b> {COUNTER} "
         "<br/> <b>Municipio de liberación:</b> {mun}"
         "<br/> <b>Estado:</b> {ent}",
         "style": {"color": "white"},
@@ -148,15 +169,15 @@ else:
 # Gráfico por estados
     try: 
         colorsIdx = {'Algodón': '#bea992', 'Maíz': '#ece556','Soya':"#99b998", 'Alfalfa':"#645a8c", 'Trigo':"#878a8f", 'Limón mexicano':"#66923d", 'Frijol':"#3bb9b8", 'Naranja dulce Valencia':"ffb566"}
-        fig_states = px.bar(counter_data, x="ent", y="id", color="specie",color_discrete_map=colorsIdx,labels={"id": "Número de solicitudes","specie": "Especie", "ent": "Entidad"})
+        fig_states = px.bar(counter_data, x="ent", y="COUNTER", color="specie",color_discrete_map=colorsIdx,labels={"COUNTER": "Número de solicitudes por Mun.","specie": "Especie", "ent": "Entidad", "mun": "Municipio"})
     except KeyError: 
         st.subheader('Intenta con otros Parámetros')
     else:
         st.markdown('''
         **Solicitudes aprobadas por entidad federativa**
 
-        El gráfico muestra el agregado de solicitudes aprobadas en cada entidad federativa. Cada bloque dentro de la barra representa a un municipio distinto
-        dentro de la Entidad Federativa.
+        El gráfico muestra el agregado de solicitudes aprobadas por municipio en cada entidad federativa. Cada bloque dentro de la barra representa el agregado de solicitudes
+        con resolución favorable para un determinado municipio.
         ''')
         st.plotly_chart(fig_states)
 
@@ -164,24 +185,28 @@ else:
     st.markdown('''
     ---
     ## **Información adicional sobre los permisos de liberación**''')
-    data_area = filtered_data.groupby(['specie']).mean()[['area']].dropna().reset_index()
-    mini_counter= filtered_data.groupby(['specie']).count()[['id']].reset_index()
+    data_area = solic_data.groupby(['specie']).mean()[['area']].dropna().reset_index()
+    mini_counter= solic_data.groupby(['specie']).count()[['id']].reset_index()
     data_area["color"] = data_area["specie"].map(colorsIdx)
     data_area = pd.merge(data_area, mini_counter, left_on='specie', right_on='specie', how='left')
 
-    fig_area = px.scatter(data_area, x="area", y="specie",color="specie",color_discrete_map=colorsIdx, size="id", labels={"area":"Superficie aprobada (ha)", "id":"Número de Solicitudes","specie":"Organismo"})
+    fig_area = px.scatter(data_area, x="area", y="specie",color="specie",color_discrete_map=colorsIdx, size="id", labels={"area":"Superficie aprobada promedio (ha)", "id":"Número de Solicitudes","specie":"Organismo"})
     
     st.markdown('''
-    **Superficie promedio aprobada por solicitud de liberación al ambiente de OGM**
+    **Superficie aprobada promedio por solicitud de liberación al ambiente de OGM**
     
     El gráfico muestra la media de superficie aprobada por municipio considerando todas las solicitudes del mismo organismo.
     El tamaño del circulo representa el número de solicitudes.''')
     st.plotly_chart(fig_area)
 # Gráfico características
-    data_caract = filtered_data[['PROMOVENTE','EVENTO','specie','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba']]
+    data_caract = filtered_data[['SOLICITUD','PROMOVENTE','EVENTO','specie','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba']]
     data_caract["color"] = data_caract["specie"].map(colorsIdx)
-    fig_caract = px.parallel_categories(data_caract, dimensions=['EVENTO','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba'], color="color",width=900, labels={"EVENTO": "Evento transgénico","specie": "Especie", "Resistencia_Insectos": "Resistencia a insectos","Tolerancia_Glufosinato": "Tolerancia a glufosinato","Tolerancia_Glifosato":"Tolerancia al glifosato","Tolerancia_Dicamba":"Tolerancia a Dicamba"})
+    data_caract = data_caract.drop_duplicates(subset=['SOLICITUD']).reset_index(drop=True)
     
+
+    fig_caract = px.parallel_categories(data_caract,dimensions=['EVENTO','Resistencia_Insectos','Tolerancia_Glufosinato','Tolerancia_Glifosato','Tolerancia_Dicamba'], color="color",width=1000,labels={"EVENTO": "Evento transgénico","specie": "Especie", "Resistencia_Insectos": "Resistencia a insectos","Tolerancia_Glufosinato": "Tolerancia a glufosinato","Tolerancia_Glifosato":"Tolerancia al glifosato","Tolerancia_Dicamba":"Tolerancia a Dicamba"})
+    fig_caract.update_layout(margin=dict(l=40, r=25, b=40, t=40))
+
     st.markdown('''
     **Carácterísticas fenotípicas de las distintas solicitudes de liberación al ambiente**
     
