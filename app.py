@@ -13,6 +13,7 @@ from io import BytesIO
 import gcsfs
 import urllib.request
 from PIL import Image
+from bokeh.models.widgets import Div
 #styling
 def local_css(file_name):
     with open(file_name) as f:
@@ -54,9 +55,11 @@ El presente Atlas interactivo de Bioseguridad muestra la información geográfic
 ambiente con resolución favorable (permisos de liberación) entre los años 2005 y 2018 en cualquiera de sus fases (Experimental, Programa Piloto y Comercial).
 *Toda la información publicada en esta página forma parte del RNB.* ''')
 
-url = 'https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020'
-
-if st.button('Ir al Registro Nacional de Bioseguridad de los OGMs'): webbrowser.open(url)
+if st.button('Ir al Registro Nacional de Bioseguridad de los OGMs'):
+    js = "window.open('https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020')"  # New tab or window
+    html = '<img src onerror="{}">'.format(js)
+    div = Div(text=html)
+    st.bokeh_chart(div)
 
 # Selectores de información
 
@@ -73,8 +76,8 @@ type_filter = st.sidebar.multiselect('Tipo de liberación',list(data_gmo['type']
 
 specie_filter = st.sidebar.multiselect('Organismo de la solicitud', list(data_gmo['specie'].unique()),default=['Algodón','Maíz','Soya'])
 
-st.sidebar.info.markdown('''
-odo el proceso de otorgamiento de permisos y todas las actividades para la liberación al ambiente de maíz GM, es decir la siembra en cualquier fase, 
+st.sidebar.info('''
+*Todo el proceso de otorgamiento de permisos y todas las actividades para la liberación al ambiente de maíz genéticamente modificado, es decir la siembra en cualquier fase, 
 están suspendidas desde 2013 como parte de las medidas cautelares por la demanda de acción colectiva interpuesta en contra de varias dependencias del Ejecutivo Federal. 
 No obstante, sí están permitidas las autorizaciones para consumo y los avisos de utilización confinada, es por ello que se sigue importando maíz GM y procesando para 
 alimentos de consumo humano y animal.

@@ -8,3 +8,4 @@ streamlit==0.59.0
 matplotlib==3.2.1
 Pillow==7.2.0
 protobuf==3.12.2
+bokeh==2.1.1
