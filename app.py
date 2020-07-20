@@ -46,16 +46,17 @@ data_gmo["color_b"] = data_gmo["specie"].map(COLORS_B)
 
 st.image(logo,use_column_width=True)
 st.markdown('''# *Atlas Interactivo de Bioseguridad de los Organismos Genéticamente Modificados*
+
 La Secretaría Ejecutiva de la CIBIOGEM, desarrolla y actualiza el Sistema Nacional de Información sobre Bioseguridad (SNIB) 
-y el Registro Nacional de Bioseguridad de los OGMS (RNB), ambas plataformas están dedicadas a reunir y sintetizar documentos y 
-bases de datos relevantes en materia de bioseguridad y uso y liberación al ambiente de Organismos Genéticamente Modificados. 
-El presente Atlas interactivo de Bioseguridad muestra la información geográfica y estadística de todos los permisos de liberación al
-ambiente con resolución favorable entre los años 2005 y 2018.*Toda la información publicada en esta página forma parte del Registro 
-Nacional de Bioseguridad de los Organismos Genéticamente Modificados.* ''')
+y el Registro Nacional de Bioseguridad de los OGMs (RNB), ambas plataformas están dedicadas a reunir y sintetizar documentos y 
+bases de datos relevantes en materia de bioseguridad. 
+El presente Atlas interactivo de Bioseguridad muestra la información geográfica y estadística de todos las solicitudes de liberación al
+ambiente con resolución favorable (permisos de liberación) entre los años 2005 y 2018 en cualquiera de sus fases (Experimental, Programa Piloto y Comercial).
+*Toda la información publicada en esta página forma parte del RNB.* ''')
 
 url = 'https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020'
 
-if st.button('Ir al Registro Nacional de Bioseguridad de OGM'): webbrowser.open_new_tab(url)
+if st.button('Ir al Registro Nacional de Bioseguridad de los OGMs'): webbrowser.open(url)
 
 # Selectores de información
 
@@ -63,7 +64,7 @@ st.sidebar.subheader('Parámetros de búsqueda')
 
 st.sidebar.markdown('''
 Empleando los siguientes controles usted podrá filtrar y seleccionar todas las solicitudes de liberación al
- ambiente de OGM con resolución favorable que figuran en el Sistema Nacional de Información en Bioseguridad desde 2005 a 2018. 
+ ambiente de Organismos Genéticamente Modificados (OGMs) con resolución favorable que figuran en el Sistema Nacional de Información sobre Bioseguridad desde 2005 a 2018. 
  Cada solicitud puede ser selecionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
 
 year_to_filter = st.sidebar.multiselect('Año de liberación',list(data_gmo['year'].unique()), default=[2005])
@@ -80,41 +81,49 @@ filtered_data= filtered_data[filtered_data.specie.isin(specie_filter)]
 
 solic_data_raw = filtered_data.groupby(['SOLICITUD']).count()[['id']].reset_index()
 
-solic_data_ents = pd.merge(solic_data_raw, filtered_data[['SOLICITUD','ent','specie','ORGANISMO','year','type','area','PROMOVENTE','EVENTO','color_r','color_g','color_b']], left_on='SOLICITUD', right_on='SOLICITUD', how='left')
+solic_data_ents = pd.merge(solic_data_raw, filtered_data[['SOLICITUD','ent','specie','ORGANISMO','year','type','area','PROMOVENTE','EVENTO','Fenotip','color_r','color_g','color_b']], left_on='SOLICITUD', right_on='SOLICITUD', how='left')
 
 solic_data = solic_data_ents.drop_duplicates(subset=['SOLICITUD']).reset_index(drop=True)
 
 #Base de datos geográfica
-filtered_data['COUNTER'] = 1
 
-counter_data = filtered_data.groupby(['cvgeo', 'type'])['COUNTER'].sum()
+counter_data_raw = filtered_data.groupby(['cvgeo','specie','type']).count()[['id']].reset_index()
 
-counter_data = pd.merge(counter_data, filtered_data[['cvgeo','mun','ent','specie','ORGANISMO','year','type','lat','lon','color_r','color_g','color_b']], left_on='cvgeo', right_on='cvgeo', how='left')
+counter_data_merge = pd.merge(counter_data_raw, filtered_data[['cvgeo','mun','ent','ORGANISMO','year','lat','lon','color_r','color_g','color_b']], on='cvgeo')
 
-counter_data = counter_data.drop_duplicates(subset=['cvgeo','type','specie']).reset_index(drop=True)
+counter_data = counter_data_merge.drop_duplicates(subset=['cvgeo','type','specie']).reset_index(drop=True)
 
 # Creación de Mapa y gráficos
 
 if not counter_data.size:
     st.subheader('Esto es embarazoso, intenta otros parámetros')
 else:
-    table_solic = solic_data[['SOLICITUD','specie','ORGANISMO','year','type','area','PROMOVENTE','EVENTO']]
-    table_solic.columns = ['Solicitud','Especie','Nombre cinetífico','Año','Tipo de solicitud','Area aprobada (ha)','Promovente','Evento']
-    table_data = counter_data[['COUNTER','mun','ent','specie','ORGANISMO','type','year']]
-    table_data.columns = ['Número de solicitudes','Municipio','Entidad','Especie','Nombre científico','Tipo de solicitud','Fecha de resolución']
+    table_solic = solic_data[['SOLICITUD','specie','ORGANISMO','year','type','area','PROMOVENTE','EVENTO','Fenotip']]
+    table_solic.columns = ['Solicitud','Especie','Nombre cinetífico','Año','Tipo de solicitud','Area aprobada (ha)','Promovente','Evento','Características']
+    table_data = counter_data[['id','mun','ent','specie','ORGANISMO','type']]
+    table_data.columns = ['Número de solicitudes','Municipio','Entidad','Especie','Nombre científico','Tipo de solicitud']
 
     # Descripción de los datos mostrados
-    st.write('**Se muestran todas las solicitudes de liberación de los siguientes años:**')
+    st.write('**Se muestran todas las solicitudes de liberación con resolución favorable de los siguientes años:**')
     st.info(', '.join(map(str,year_to_filter)))
     st.write('**De los siguientes tipos de liberación:**')
     st.info(', '.join(type_filter))
     st.write('**Y de los siguientes organismos:**')
     st.info(', '.join(specie_filter))
+
+    st.markdown('''
+    **Tabla de solicitudes de liberación al ambiente con resolución favorable**
+    
+    La siguiente tabla muestra las diferentes solicitudes que cumplen con los criterios de busqueda. Adicionalente, se detalla, el código de la solicitud, la especie,
+     el año de la solicitud, el tipo de liberación, el área aprobada, el promovente, el evento transgénico y las características del organismo. Puedes emplear las barras laterales para desplazarte en la 
+     tabla y el icono de las flechas en la esquina superior derecha de la tabla
+     para mostrar la información en pantalla completa.''')
+
     st.write(table_solic)
 
     st.markdown('''
     ---
-    ## **Resumen de los permisos de liberación selecionados agrupados por municipio**''')
+    ## **Resumen de las solicitudes de liberación selecionadas agrupadas por municipio**''')
 
     st.markdown('''
     **Ubicación geográfica de las solicitudes de liberación al ambiente**
@@ -147,7 +156,7 @@ else:
             radius_max_pixels=100,
             line_width_min_pixels=1,
             get_position=['lon', 'lat'],
-            get_radius="COUNTER*700",
+            get_radius="id*700",
             get_fill_color=['color_r', 'color_g', 'color_b'],
             get_line_color=[0, 0, 0],
         ),
@@ -155,7 +164,7 @@ else:
      tooltip={
         "html": "<b>Organismo:</b> {specie}"
         "<br/> <b>Tipo de liberación:</b> {type}"
-        "<br/> <b>Número de solicitudes:</b> {COUNTER} "
+        "<br/> <b>Número de solicitudes:</b> {id} "
         "<br/> <b>Municipio de liberación:</b> {mun}"
         "<br/> <b>Estado:</b> {ent}",
         "style": {"color": "white"},
@@ -163,17 +172,17 @@ else:
      ))
 #Tabla por municipio
     st.markdown('''
-    **Tabla de Resoluciones**
+    **Tabla de solicitudes de liberación por municipio**
     
-    La siguiente tabla muestra el numero de permisos agrupados por municipio. Adicionalente, se detalla la especie, el tipo de solicitud
-     y el año de liberación. Puedes emplear las barras laterales para desplazarte en la tabla y el icono de las fechas en la esquina superior derecha de la tabla
+    La siguiente tabla muestra el número de solicitudes agrupadas por municipio. Adicionalente, se detalla la especie y el tipo de solicitud. 
+    Puedes emplear las barras laterales para desplazarte en la tabla y el icono de las flechas en la esquina superior derecha de la tabla
      para mostrar la información en pantalla completa.''')
     st.write(table_data)
 
 # Gráfico por estados
     try: 
-        colorsIdx = {'Algodón': '#bea992', 'Maíz': '#ece556','Soya':"#99b998", 'Alfalfa':"#645a8c", 'Trigo':"#878a8f", 'Limón mexicano':"#66923d", 'Frijol':"#3bb9b8", 'Naranja dulce Valencia':"ffb566"}
-        fig_states = px.bar(counter_data, x="ent", y="COUNTER", color="specie",color_discrete_map=colorsIdx,labels={"COUNTER": "Número de solicitudes por Mun.","specie": "Especie", "ent": "Entidad", "mun": "Municipio"})
+        colorsIdx = {'Algodón': '#bea992', 'Maíz': '#ece556','Soya':"#99b998", 'Alfalfa':"#645a8c", 'Trigo':"#878a8f", 'Limón mexicano':"#66923d", 'Frijol':"#3bb9b8", 'Naranja dulce Valencia':"#ffb566"}
+        fig_states = px.bar(counter_data, x="ent", y="id", color="specie",color_discrete_map=colorsIdx,labels={"id": "Número de solicitudes por Mun.","specie": "Especie", "ent": "Entidad", "mun": "Municipio"})
     except KeyError: 
         st.subheader('Intenta con otros Parámetros')
     else:
@@ -188,7 +197,7 @@ else:
 #Gráfico Superficies
     st.markdown('''
     ---
-    ## **Información adicional sobre los permisos de liberación**''')
+    ## **Información adicional sobre las solicitude de liberación**''')
     data_area = solic_data.groupby(['specie']).mean()[['area']].dropna().reset_index()
     mini_counter= solic_data.groupby(['specie']).count()[['id']].reset_index()
     data_area["color"] = data_area["specie"].map(colorsIdx)
@@ -197,7 +206,7 @@ else:
     fig_area = px.scatter(data_area, x="area", y="specie",color="specie",color_discrete_map=colorsIdx, size="id", labels={"area":"Superficie aprobada promedio (ha)", "id":"Número de Solicitudes","specie":"Organismo"})
     
     st.markdown('''
-    **Superficie aprobada promedio por solicitud de liberación al ambiente de OGM**
+    **Superficie aprobada promedio por solicitud de liberación al ambiente de OGMs**
     
     El gráfico muestra la media de superficie aprobada por municipio considerando todas las solicitudes del mismo organismo.
     El tamaño del circulo representa el número de solicitudes.''')
