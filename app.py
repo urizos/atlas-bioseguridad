@@ -67,6 +67,13 @@ Empleando los siguientes controles usted podrá filtrar y seleccionar todas las 
  ambiente de Organismos Genéticamente Modificados (OGMs) con resolución favorable que figuran en el Sistema Nacional de Información sobre Bioseguridad desde 2005 a 2018. 
  Cada solicitud puede ser selecionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
 
+st.sidebar.info.markdown('''
+odo el proceso de otorgamiento de permisos y todas las actividades para la liberación al ambiente de maíz GM, es decir la siembra en cualquier fase, 
+están suspendidas desde 2013 como parte de las medidas cautelares por la demanda de acción colectiva interpuesta en contra de varias dependencias del Ejecutivo Federal. 
+No obstante, sí están permitidas las autorizaciones para consumo y los avisos de utilización confinada, es por ello que se sigue importando maíz GM y procesando para 
+alimentos de consumo humano y animal.
+''')
+
 year_to_filter = st.sidebar.multiselect('Año de liberación',list(data_gmo['year'].unique()), default=[2005])
 
 type_filter = st.sidebar.multiselect('Tipo de liberación',list(data_gmo['type'].unique()), default=['Experimental'])
