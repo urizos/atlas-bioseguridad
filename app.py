@@ -14,6 +14,9 @@ import gcsfs
 import urllib.request
 from PIL import Image
 from bokeh.models.widgets import Div
+from streamlit import caching
+import SessionState
+
 #styling
 def local_css(file_name):
     with open(file_name) as f:
@@ -61,6 +64,9 @@ if st.button('Ir al Registro Nacional de Bioseguridad de los OGMs'):
     div = Div(text=html)
     st.bokeh_chart(div)
 
+update = "24/07/2020"
+st.write('''_Feha de la última actualización:_''', update)
+
 # Selectores de información
 
 st.sidebar.subheader('Parámetros de búsqueda')
@@ -68,19 +74,57 @@ st.sidebar.subheader('Parámetros de búsqueda')
 st.sidebar.markdown('''
 Empleando los siguientes controles usted podrá filtrar y seleccionar todas las solicitudes de liberación al
  ambiente de Organismos Genéticamente Modificados (OGMs) con resolución favorable que figuran en el Sistema Nacional de Información sobre Bioseguridad desde 2005 a 2018. 
- Cada solicitud puede ser selecionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
+ Cada solicitud puede ser seleccionada por ```Tipo``` de liberación, ```Año``` de la solicitud y ```Organismo``` de la solicitud.''')
 
-year_to_filter = st.sidebar.multiselect('Año de liberación',list(data_gmo['year'].unique()), default=[2005])
+#Sesión y parametros widget
+session_state = SessionState.get(year_button=False, specie_button=False, year_id=0, specie_id=0)
 
-type_filter = st.sidebar.multiselect('Tipo de liberación',list(data_gmo['type'].unique()), default=['Experimental'])
+st.sidebar.markdown("**Año de la solicitud**")
+year_button = st.sidebar.button('Incluir todos los años')
+if year_button:
+    session_state.year_button = True
+    session_state.year_id += 1
+if session_state.year_button:
+    year_to_filter = st.sidebar.multiselect('Elije uno o más años de la lista',[2020, 2019]+list(data_gmo['year'].unique()), default=[2020, 2019]+list(data_gmo['year'].unique()),key=session_state.year_id)
+else:
+    year_to_filter = st.sidebar.multiselect('Elije uno o más años de la lista',[2020, 2019]+list(data_gmo['year'].unique()), default=[2005])
 
-specie_filter = st.sidebar.multiselect('Organismo de la solicitud', list(data_gmo['specie'].unique()),default=['Algodón','Maíz','Soya'])
+st.sidebar.markdown("**Tipo de liberación**")
+type_filter = st.sidebar.multiselect('Elije uno o más tipos de liberación',list(data_gmo['type'].unique()), default=['Experimental'])
 
+st.sidebar.markdown("**Organismo de la solicitud**")
+specie_button = st.sidebar.button('Incluir todos los organismos')
+if specie_button:
+    session_state.specie_button = True
+    session_state.specie_id += 1
+    
+if session_state.specie_button:
+    specie_filter = st.sidebar.multiselect('Elije uno o varios organismos de la solicitud', list(data_gmo['specie'].unique()),default=list(data_gmo['specie'].unique()),key=session_state.specie_id)
+
+else:
+    specie_filter = st.sidebar.multiselect('Elije uno o varios organismos de la solicitud', list(data_gmo['specie'].unique()),default=['Algodón','Maíz','Soya'])
+
+st.sidebar.markdown("**Sobre las solicitudes de maíz GM**")
 st.sidebar.info('''
 *Todo el proceso de otorgamiento de permisos y todas las actividades para la liberación al ambiente de maíz genéticamente modificado, es decir la siembra en cualquier fase, 
 están suspendidas desde 2013 como parte de las medidas cautelares por la demanda de acción colectiva interpuesta en contra de varias dependencias del Ejecutivo Federal. 
 No obstante, sí están permitidas las autorizaciones para consumo y los avisos de utilización confinada, es por ello que se sigue importando maíz GM y procesando para 
 alimentos de consumo humano y animal.
+''')
+
+st.sidebar.markdown('**Sobre la solicitud de liberación de soya 007/2012**')
+st.sidebar.info('''
+En el 2012 la Secretaría de Agricultura, Ganadería, Desarrollo Rural, Pesca y Alimentación (SAGARPA, hoy Secretaría de Agricultura y 
+Desarrollo Rural, SADER) expidió el permiso de liberación al ambiente de soya genéticamente modificada B00.04.03.02.01.-4377. para 
+varios municipios de los estados de Campeche, Chiapas, Quintana Roo, San Luis Potosí, Tamaulipas, Veracruz y Yucatán, derivado de la 
+solicitud de liberación al ambiente en fase comercial número 007/2012. Sin embargo, se interpusieron recursos administrativos y
+ judiciales pendientes de resolver en la actualidad, por lo que las actividades relativas a dicho permiso se encuentran detenidas.
+''')
+
+st.sidebar.markdown('**Sobre las solicitudes 2019-2020**')
+st.sidebar.markdown('''
+A la última fecha de actualización el _RNB_ no cuenta con solicitudes de liberación con resolución favorable para los años
+2019 y 2020
 ''')
 
 filtered_data = data_gmo[data_gmo.year.isin(year_to_filter)]
@@ -106,10 +150,10 @@ counter_data = counter_data_merge.drop_duplicates(subset=['cvgeo','type','specie
 # Creación de Mapa y gráficos
 
 if not counter_data.size:
-    st.subheader('Esto es embarazoso, intenta otros parámetros')
+    st.subheader('No se encontró ningún registro con los parámetros de busqueda ingresados, intenta otros parámetros')
 else:
     table_solic = solic_data[['SOLICITUD','specie','ORGANISMO','year','type','area','PROMOVENTE','EVENTO','Fenotip']]
-    table_solic.columns = ['Solicitud','Especie','Nombre cinetífico','Año','Tipo de solicitud','Area aprobada (ha)','Promovente','Evento','Características']
+    table_solic.columns = ['Solicitud','Especie','Nombre científico','Año','Tipo de solicitud','Area aprobada (ha)','Promovente','Evento','Características']
     table_data = counter_data[['id','mun','ent','specie','ORGANISMO','type']]
     table_data.columns = ['Número de solicitudes','Municipio','Entidad','Especie','Nombre científico','Tipo de solicitud']
 
@@ -124,7 +168,7 @@ else:
     st.markdown('''
     **Tabla de solicitudes de liberación al ambiente con resolución favorable**
     
-    La siguiente tabla muestra las diferentes solicitudes que cumplen con los criterios de busqueda. Adicionalente, se detalla, el código de la solicitud, la especie,
+    La siguiente tabla muestra las diferentes solicitudes que cumplen con los criterios de búsqueda. Adicionalmente, se detalla, el código de la solicitud, la especie,
      el año de la solicitud, el tipo de liberación, el área aprobada, el promovente, el evento transgénico y las características del organismo. Puedes emplear las barras laterales para desplazarte en la 
      tabla y el icono de las flechas en la esquina superior derecha de la tabla
      para mostrar la información en pantalla completa.''')
@@ -140,7 +184,7 @@ else:
     
     El mapa muestra la ubicación geográfica de las solicitudes de liberación. Puedes
     posicionar el cursor sobre cada punto para conocer información adicional.
-    El ancho del circulo corresponde al número de solicitudes por cada municipio. ''')
+    El ancho del circulo corresponde al número de solicitudes por cada municipio, cada circulo fue asociado al centroide del municipio.''')
 
     #Mapa
     st.image(legend,use_column_width=True)
@@ -184,7 +228,7 @@ else:
     st.markdown('''
     **Tabla de solicitudes de liberación por municipio**
     
-    La siguiente tabla muestra el número de solicitudes agrupadas por municipio. Adicionalente, se detalla la especie y el tipo de solicitud. 
+    La siguiente tabla muestra el número de solicitudes agrupadas por municipio. Adicionalmente, se detalla la especie y el tipo de solicitud. 
     Puedes emplear las barras laterales para desplazarte en la tabla y el icono de las flechas en la esquina superior derecha de la tabla
      para mostrar la información en pantalla completa.''')
     st.write(table_data)
@@ -207,7 +251,7 @@ else:
 #Gráfico Superficies
     st.markdown('''
     ---
-    ## **Información adicional sobre las solicitude de liberación**''')
+    ## **Información adicional sobre las solicitudes de liberación**''')
     data_area = solic_data.groupby(['specie']).mean()[['area']].dropna().reset_index()
     mini_counter= solic_data.groupby(['specie']).count()[['id']].reset_index()
     data_area["color"] = data_area["specie"].map(colorsIdx)
@@ -231,10 +275,10 @@ else:
     fig_caract.update_layout(margin=dict(l=150, r=15, b=40, t=40))
 
     st.markdown('''
-    **Carácterísticas fenotípicas de las distintas solicitudes de liberación al ambiente**
+    **Características fenotípicas de las distintas solicitudes de liberación al ambiente**
     
     El gráfico muestra el número de solicitudes agrupadas según el evento transgénico y sus características de resistencia a insectos o tolerancia a herbicidas.
-    Cada atributo está representado por una columna de rectángulos. El tamaño de cada rectángulo reflejan el número de solicitudes que presentó o no una carácterística
+    Cada atributo está representado por una columna de rectángulos. El tamaño de cada rectángulo reflejan el número de solicitudes que presentó o no una característica
      determinada. Al posicionar el cursor en cada segmento de la barra se muestra el número de solicitudes que poseen dicha característica bajo la leyenda: *Cuenta* (```Count```).''')
     st.image(legend,use_column_width=True)
     st.plotly_chart(fig_caract)
