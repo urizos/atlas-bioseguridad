@@ -277,8 +277,10 @@ else:
     st.markdown('''
     **Características fenotípicas de las distintas solicitudes de liberación al ambiente**
     
-    El gráfico muestra el número de solicitudes agrupadas según el evento transgénico y sus características de resistencia a insectos o tolerancia a herbicidas.
-    Cada atributo está representado por una columna de rectángulos. El tamaño de cada rectángulo reflejan el número de solicitudes que presentó o no una característica
-     determinada. Al posicionar el cursor en cada segmento de la barra se muestra el número de solicitudes que poseen dicha característica bajo la leyenda: *Cuenta* (```Count```).''')
+    El gráfico muestra el número de solicitudes agrupadas según el evento transgénico y sus características de resistencia a insectos o 
+    tolerancia a herbicidas. Cada atributo está representado por una columna de rectángulos. El tamaño de cada rectángulo refleja el 
+    número de solicitudes que presentó o no una característica determinada, además cada organismo posee un color distinto. 
+    Al posicionar el cursor en cada segmento de la barra se muestra el número de solicitudes que poseen dicha característica bajo
+    la leyenda: *Cuenta* (```Count```).''')
     st.image(legend,use_column_width=True)
     st.plotly_chart(fig_caract)
