@@ -49,7 +49,9 @@ data_gmo["color_g"] = data_gmo["specie"].map(COLORS_G)
 data_gmo["color_b"] = data_gmo["specie"].map(COLORS_B)
 
 st.image(logo,use_column_width=True)
-st.markdown('''# *Ecosistema Informático de Bioseguridad de los Organismos Genéticamente Modificados*
+st.markdown('''# *Ecosistema Nacional Informático de Bioseguridad de los Organismos Genéticamente Modificados*
+
+## *ENI-Bioseguridad*
 
 La Secretaría Ejecutiva de la CIBIOGEM, desarrolla y actualiza el Sistema Nacional de Información sobre Bioseguridad (SNIB) 
 y el Registro Nacional de Bioseguridad de los OGM (RNB), ambas plataformas están dedicadas a reunir y sintetizar documentos y 
@@ -178,7 +180,7 @@ else:
 
     st.markdown('''
     ---
-    ## **Resumen de las solicitudes de liberación selecionadas desglosadas por municipio**''')
+    ## **Resumen de las solicitudes de liberación seleccionadas desglosadas por municipio**''')
 
     st.markdown('''
     **Ubicación geográfica de las solicitudes de liberación al ambiente**
