@@ -49,23 +49,24 @@ data_gmo["color_g"] = data_gmo["specie"].map(COLORS_G)
 data_gmo["color_b"] = data_gmo["specie"].map(COLORS_B)
 
 st.image(logo,use_column_width=True)
-st.markdown('''# *Atlas Interactivo de Bioseguridad de los Organismos Genéticamente Modificados*
+st.markdown('''# *Ecosistema Informático de Bioseguridad de los Organismos Genéticamente Modificados*
 
 La Secretaría Ejecutiva de la CIBIOGEM, desarrolla y actualiza el Sistema Nacional de Información sobre Bioseguridad (SNIB) 
-y el Registro Nacional de Bioseguridad de los OGMs (RNB), ambas plataformas están dedicadas a reunir y sintetizar documentos y 
+y el Registro Nacional de Bioseguridad de los OGM (RNB), ambas plataformas están dedicadas a reunir y sintetizar documentos y 
 bases de datos relevantes en materia de bioseguridad. 
-El presente Atlas interactivo de Bioseguridad muestra la información geográfica y estadística de todos las solicitudes de liberación al
-ambiente con resolución favorable (permisos de liberación) entre los años 2005 y 2018 en cualquiera de sus fases (Experimental, Programa Piloto y Comercial).
+El presente Ecosistema Informático de Bioseguridad muestra la información geográfica y estadística de todas las solicitudes de 
+liberación al ambiente con resolución favorable (permisos de liberación) entre los años 2005 y 2018 en cualquiera de sus 
+fases (Experimental, Programa Piloto y Comercial).
 *Toda la información publicada en esta página forma parte del RNB.* ''')
 
-if st.button('Ir al Registro Nacional de Bioseguridad de los OGMs'):
+if st.button('Ir al Registro Nacional de Bioseguridad de los OGM'):
     js = "window.open('https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020')"  # New tab or window
     html = '<img src onerror="{}">'.format(js)
     div = Div(text=html)
     st.bokeh_chart(div)
 
 update = "24/07/2020"
-st.write('''_Feha de la última actualización:_''', update)
+st.write('''_Fecha de la última actualización:_''', update)
 
 # Selectores de información
 
@@ -212,6 +213,7 @@ else:
             get_position=['lon', 'lat'],
             get_radius="id*700",
             get_fill_color=['color_r', 'color_g', 'color_b'],
+            hover=True,
             get_line_color=[0, 0, 0],
         ),
      ],
@@ -280,7 +282,6 @@ else:
     El gráfico muestra el número de solicitudes agrupadas según el evento transgénico y sus características de resistencia a insectos o 
     tolerancia a herbicidas. Cada atributo está representado por una columna de rectángulos. El tamaño de cada rectángulo refleja el 
     número de solicitudes que presentó o no una característica determinada, además cada organismo posee un color distinto. 
-    Al posicionar el cursor en cada segmento de la barra se muestra el número de solicitudes que poseen dicha característica bajo
-    la leyenda: *Cuenta* (```Count```).''')
+    Al posicionar el cursor en cada segmento de la barra se muestra el número de solicitudes que poseen dicha característica bajo la leyenda: *Cuenta* (```Count```).''')
     st.image(legend,use_column_width=True)
     st.plotly_chart(fig_caract)
