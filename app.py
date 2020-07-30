@@ -178,14 +178,14 @@ else:
 
     st.markdown('''
     ---
-    ## **Resumen de las solicitudes de liberación selecionadas agrupadas por municipio**''')
+    ## **Resumen de las solicitudes de liberación selecionadas desglosadas por municipio**''')
 
     st.markdown('''
     **Ubicación geográfica de las solicitudes de liberación al ambiente**
     
-    El mapa muestra la ubicación geográfica de las solicitudes de liberación. Puedes
+    El mapa muestra la ubicación geográfica de las solicitudes de liberación desglosadas por municipio (una solicitud puede incluir a varios municipios). Puedes
     posicionar el cursor sobre cada punto para conocer información adicional.
-    El ancho del circulo corresponde al número de solicitudes por cada municipio, cada circulo fue asociado al centroide del municipio.''')
+    El ancho del circulo corresponde al número de solicitudes desglosadas por municipio, cada circulo fue asociado al centroide del municipio.''')
 
     #Mapa
     st.image(legend,use_column_width=True)
@@ -228,9 +228,9 @@ else:
      ))
 #Tabla por municipio
     st.markdown('''
-    **Tabla de solicitudes de liberación por municipio**
+    **Tabla de solicitudes de liberación desglosadas por municipio**
     
-    La siguiente tabla muestra el número de solicitudes agrupadas por municipio. Adicionalmente, se detalla la especie y el tipo de solicitud. 
+    La siguiente tabla muestra el número de solicitudes desglosada por municipio. Adicionalmente, se detalla la especie y el tipo de solicitud. 
     Puedes emplear las barras laterales para desplazarte en la tabla y el icono de las flechas en la esquina superior derecha de la tabla
      para mostrar la información en pantalla completa.''')
     st.write(table_data)
@@ -245,7 +245,7 @@ else:
         st.markdown('''
         **Solicitudes aprobadas por entidad federativa**
 
-        El gráfico muestra el agregado de solicitudes aprobadas por municipio en cada entidad federativa. Cada bloque dentro de la barra representa el agregado de solicitudes
+        El gráfico muestra el agregado de solicitudes aprobadas por municipio en cada entidad federativa, a partir de la tabla anterior. Cada bloque dentro de la barra representa el agregado de solicitudes
         con resolución favorable para un determinado municipio.
         ''')
         st.plotly_chart(fig_states)
@@ -264,7 +264,7 @@ else:
     st.markdown('''
     **Superficie aprobada promedio por solicitud de liberación al ambiente de OGMs**
     
-    El gráfico muestra la media de superficie aprobada por municipio considerando todas las solicitudes del mismo organismo.
+    El gráfico muestra la media de superficie aprobada considerando todas las solicitudes del mismo organismo.
     El tamaño del circulo representa el número de solicitudes.''')
     st.plotly_chart(fig_area)
 # Gráfico características
