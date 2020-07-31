@@ -61,12 +61,6 @@ liberación al ambiente con resolución favorable (permisos de liberación) entr
 fases (Experimental, Programa Piloto y Comercial).
 *Toda la información publicada en esta página forma parte del RNB.* ''')
 
-if st.button('Ir al Registro Nacional de Bioseguridad de los OGM'):
-    js = "window.open('https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020')"  # New tab or window
-    html = '<img src onerror="{}">'.format(js)
-    div = Div(text=html)
-    st.bokeh_chart(div)
-
 update = "24/07/2020"
 st.write('''_Fecha de la última actualización:_''', update)
 
@@ -177,6 +171,14 @@ else:
      para mostrar la información en pantalla completa.''')
 
     st.write(table_solic)
+
+    st.markdown('''Para mas información y detales sobre las distintas solicitudes de liberación al ambiente puede visitar el Registro Nacional de Bioseguridad de los OGM (RNB):''')
+
+    if st.button('Ir al Registro Nacional de Bioseguridad de los OGM'):
+        js = "window.open('https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020')"  # New tab or window
+    html = '<img src onerror="{}">'.format(js)
+    div = Div(text=html)
+    st.bokeh_chart(div)
 
     st.markdown('''
     ---
