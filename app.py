@@ -172,7 +172,7 @@ else:
 
     st.write(table_solic)
 
-    st.markdown('''Para mas información y detalles sobre las distintas solicitudes de liberación al ambiente puede visitar el Registro Nacional de Bioseguridad de los OGM (RNB):''')
+    st.markdown('''Para más información y detalles sobre las distintas solicitudes de liberación al ambiente puede visitar el Registro Nacional de Bioseguridad de los OGM (RNB):''')
 
     if st.button('Ir al Registro Nacional de Bioseguridad de los OGM'):
         js = "window.open('https://www.conacyt.gob.mx/cibiogem/index.php/solicitudes/permisos-de-liberacion/solicitudes-de-permisos-de-liberacion-2020')"  # New tab or window
