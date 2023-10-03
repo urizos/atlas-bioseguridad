@@ -6,6 +6,6 @@ gcsfs==0.6.2
 pydeck==0.3.1
 streamlit==0.59.0
 matplotlib==3.2.1
-Pillow==7.2.0
+Pillow==10.0.1
 protobuf==3.12.2
 bokeh==2.1.1
